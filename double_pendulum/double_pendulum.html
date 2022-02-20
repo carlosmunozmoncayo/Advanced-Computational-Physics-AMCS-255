@@ -1,0 +1,168 @@
+<!--
+Copyright 2021 Matthias Müller - Ten Minute Physics
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+-->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>Cannonball</title>
+</head>
+
+<body>
+
+<canvas id="myCanvas" style="border:2px solid"></canvas>
+
+<script>
+
+	// canvas setup -------------------------------------------------------
+
+	var canvas = document.getElementById("myCanvas");
+	var c = canvas.getContext("2d");
+
+	canvas.width = window.innerWidth - 20;
+	canvas.height = window.innerHeight - 100;
+
+	var simMinWidth = 20.0;
+	var cScale = Math.min(canvas.width, canvas.height) / simMinWidth;
+	var simWidth = canvas.width / cScale;
+	var simHeight = canvas.height / cScale;
+
+	function cX(pos) {
+		return pos.x * cScale + 200;
+	}
+
+	function cY(pos) {
+		return canvas.height - pos.y * cScale - 200;
+	}
+
+	// scene -------------------------------------------------------
+
+	var gravity = { x: 0.0, y: -10.0};
+	var timeStep = 0.02;//0.05;
+
+    //initial conditions
+
+    var support_pos={x: 5, y: 10}
+    var l1= 4; // Length pole 1
+    var l2= 4; // Length pole 2
+    var mass1= 1; // Mass ball 1
+    var mass2= 1; // Mass ball 2
+    
+    function angle_to_pos1(theta1) {    //Returns position of ball 1 from theta 1 (translated with support)
+            var obj ={
+                x: l1*Math.sin(theta1)+support_pos.x,
+                y: -l1*Math.cos(theta1)+support_pos.y
+                };
+            return obj;
+        }
+
+    function angle_to_pos2(theta1,theta2) { //Returns position of ball 2 from theta 1 and 2 (translated with support)
+            var obj ={
+                x: l1*Math.sin(theta1)+l2*Math.sin(theta2)+support_pos.x,
+                y: -l1*Math.cos(theta1)-l2*Math.cos(theta2)+support_pos.y
+                };
+            return obj;
+        }
+    
+    var theta1=Math.PI/4; //Setting initial angles
+    var theta2=0;
+
+    var initial_pos1=angle_to_pos1(theta1); // Initial position of ball 1
+
+    var initial_pos2=angle_to_pos2(theta1,theta2); // Initial position of ball 2
+    //var initial_pos2={x: 9, y: 11 } // Initial position of ball 2
+    
+
+	var ball = {
+		radius : 0.2,
+		pos : {x : initial_pos1.x, y : initial_pos1.y},
+		vel : {x : 0, y : 0}
+	};
+    
+    var ball1 = {
+		radius : 0.2,
+		pos : {x : initial_pos1.x, y : initial_pos1.y},
+		vel : {x : 0, y : 0}
+	};
+
+    var ball2 = {
+		radius : 0.2,
+		pos : {x : initial_pos2.x, y : initial_pos2.y},
+		vel : {x : 0, y : 0}
+	};
+
+
+	
+	var k = 25;
+	var m = 1;
+
+	// drawing -------------------------------------------------------
+
+	function draw() {
+		c.clearRect(0, 0, canvas.width, canvas.height);
+
+		c.fillStyle = "#000000";//"#FF0000";
+
+		c.beginPath();			
+		c.arc(
+			cX(ball.pos), cY(ball.pos), cScale * ball.radius, 0.0, 2.0 * Math.PI);
+        c.fill();
+		c.closePath();
+		//c.fill();
+
+        //Drawing line
+        c.beginPath();
+        c.moveTo(cX(initial_pos1),cY(initial_pos1));
+        c.lineTo(cX(ball.pos), cY(ball.pos));
+        c.stroke();
+        
+        c.beginPath();
+        c.moveTo(cX(support_pos),cY(support_pos));
+        c.lineTo(cX(initial_pos1), cY(initial_pos1));
+        c.stroke();
+
+        c.beginPath();
+        c.moveTo(cX(initial_pos1),cY(initial_pos1));
+        c.lineTo(cX(initial_pos2), cY(initial_pos2));
+        c.stroke();
+
+	}
+
+	// simulation ----------------------------------------------------
+
+	function simulate() {
+
+		ball.vel.x = ball.vel.x + timeStep * (-k/m * ball.pos.x);
+		
+		ball.pos.x = ball.pos.x + timeStep * ball.vel.x;
+
+        //ball.vel.y = ball.vel.y + timeStep * gravity.y;
+        ball.vel.y = ball.vel.y + timeStep * (-gravity.y +(-k/m * ball.pos.y)  );
+
+		ball.pos.y = ball.pos.y + timeStep * ball.vel.y;
+
+		if (ball.pos.y < -2.0) {
+			ball.pos.y = 0.0;
+			ball.vel.y = -ball.vel.y;
+		}
+		
+
+	}
+
+	// make browser to call us repeatedly -----------------------------------
+
+	function update() {
+		simulate();
+		draw();
+		requestAnimationFrame(update);
+	}
+	
+	update();
+	
+</script> 
+</body>
+</html>
