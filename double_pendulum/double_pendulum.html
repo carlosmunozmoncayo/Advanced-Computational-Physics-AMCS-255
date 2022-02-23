@@ -42,11 +42,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 	// scene -------------------------------------------------------
 
 	var gravity = 10;
-	var timeStep = 0.03;
+	var timeStep = 0.01;
 
     //Constant initial conditions
 
-    var support_pos={x: 5, y: 5}
+    var support_pos={x: (canvas.width/4-200)/cScale, y: (200)/cScale}
     var l1= 5; // Length pole 1
     var l2= 4; // Length pole 2
     var mass1= 1; // Mass ball 1
@@ -57,7 +57,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     var theta1=Math.PI/2; //Initializing angles
     var theta2=Math.PI/2;
     
-    var theta1p=1; //Initializing velocities 
+    var theta1p=2; //Initializing velocities 
     var theta2p=0; 
 
     var theta1pp=0; //Initializing accelerations
@@ -118,18 +118,35 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 	// drawing -------------------------------------------------------
 
-	function draw() {
-		c.clearRect(0, 0, canvas.width, canvas.height);
+	function draw_double_pendulum() {
+		c.clearRect(0, 0, canvas.width/2, canvas.height);
 
-		c.fillStyle = "#000000";//"#FF0000";
+		//c.fillStyle = "#000000";//"#FF0000";
 
 
 
-        //Drawing a line thorugh the middle of the screen
+        //Drawing a line through the middle of the screen
         c.beginPath();
         c.moveTo(canvas.width/2,0);
         c.lineTo(canvas.width/2, canvas.height);
+        c.strokeStyle="#000000";
         c.stroke();
+        c.closePath();
+
+        //Drawing axis for double pendulum
+        c.beginPath();
+        c.strokeStyle= "#D3D3D3";
+        c.moveTo(cX(support_pos),0);
+        c.lineTo(cX(support_pos), canvas.height);
+        c.stroke();
+        c.closePath();
+        
+        c.beginPath();
+        c.strokeStyle= "#D3D3D3";
+        c.moveTo(0,cY(support_pos));
+        c.lineTo(canvas.width/2,cY(support_pos));
+        c.stroke();
+        c.closePath();
         
         //Drawing ball 1
         c.fillStyle = "#0000FF";
@@ -147,28 +164,56 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         c.fill();
 		c.closePath();
 
-
-		//c.fill();
-
-        //Drawing line
-        /*
-        c.beginPath();
-        c.moveTo(cX(initial_pos1),cY(initial_pos1));
-        c.lineTo(cX(ball.pos), cY(ball.pos));
-        c.stroke();
-        */
-        
+        //Drawing poles
         c.beginPath();
         c.moveTo(cX(support_pos),cY(support_pos));
         c.lineTo(cX(ball1.pos), cY(ball1.pos));
+        c.strokeStyle="#000000";
         c.stroke();
+        c.closePath();
 
         c.beginPath();
         c.moveTo(cX(ball1.pos),cY(ball1.pos));
         c.lineTo(cX(ball2.pos), cY(ball2.pos));
+        c.strokeStyle="#000000";
         c.stroke();
+        c.closePath();
+        
+        //Drawing axis for phase space
+        c.beginPath();
+        c.strokeStyle= "#D3D3D3";
+        c.moveTo(cX(support_pos)*3,0);
+        c.lineTo(cX(support_pos)*3, canvas.height);
+        c.stroke();
+        c.closePath();
+        
+        c.beginPath();
+        c.strokeStyle= "#D3D3D3";
+        c.moveTo(canvas.width/2,cY(support_pos));
+        c.lineTo(canvas.width,cY(support_pos));
+        c.stroke();
+        c.closePath();
 
+        c.fillStyle = "#0000FF";
+		c.beginPath();			
+		c.arc(
+			cX(ball1.pos)+canvas.width/2, cY(ball1.pos), 1, 0.0, 2.0 * Math.PI);
+        c.fill();
+		c.closePath();
+        
+        c.fillStyle = "#FF0000";
+        c.beginPath();			
+		c.arc(
+			cX(ball2.pos)+canvas.width/2, cY(ball2.pos), 1, 0.0, 2.0 * Math.PI);
+        c.fill();
+		c.closePath();
 	}
+
+    function draw_phase(){
+        
+
+
+        }
 
 	// simulation ----------------------------------------------------
 
@@ -191,32 +236,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
         ball1.pos=angle_to_pos1(theta1);
         ball2.pos=angle_to_pos2(theta1,theta2);
-        
-        
-       /* 
-		ball.vel.x = ball.vel.x + timeStep * (-k/m * ball.pos.x);
-		
-		ball.pos.x = ball.pos.x + timeStep * ball.vel.x;
-
-        //ball.vel.y = ball.vel.y + timeStep * gravity.y;
-        ball.vel.y = ball.vel.y + timeStep * (-gravity.y +(-k/m * ball.pos.y)  );
-
-		ball.pos.y = ball.pos.y + timeStep * ball.vel.y;
-
-		if (ball.pos.y < -2.0) {
-			ball.pos.y = 0.0;
-			ball.vel.y = -ball.vel.y;
-		}
-        */
-		
-
 	}
 
 	// make browser to call us repeatedly -----------------------------------
 
 	function update() {
 		simulate();
-		draw();
+		draw_double_pendulum();
+        draw_phase();
 		requestAnimationFrame(update);
 	}
 	
