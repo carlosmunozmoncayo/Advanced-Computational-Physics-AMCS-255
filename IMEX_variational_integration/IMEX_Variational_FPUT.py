@@ -47,13 +47,20 @@ def grad_U(q):
     return partials_U
                 
         
-def IMEX_FPUT_1_step(m,qn,pn,h,omega_sq):
-    Omega,A=create_matrices(omega_sq=omega_sq,m=m,h=h)
+def IMEX_FPUT_1_step(qn,pn,h,Omega,A):
     pnp=pn-0.5*h*grad_U(qn)
     qn1=A@(qn+h*pnp-0.25*h**2*Omega@qn)
     pn1m=pnp-0.5*h*Omega@(qn1+qn)
     pn1=pn1m-0.5*h*grad_U(qn1)
     return qn1,pn1
 
+def IMEX_FPUT_simulation(m,q0,p0,h,omega_sq,t_final):
+    Omega,A=create_matrices(omega_sq=omega_sq,m=m,h=h)
+    t=0
+    qn=q0
+    pn=p0
+    while t<t_final:
+        qn,pn=IMEX_1_FPUT_1_step(qn=qn,pn=pn,h=h,Omega=Omega,A=A)
+        t+=h
+    return qn,pn
 
-    
