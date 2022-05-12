@@ -9,6 +9,9 @@
 import numpy as np
 import scipy.sparse as sparse
 
+#####
+#Some necessary things for both IMEX and Störmer-Verlet
+#####
 def create_matrices(omega_sq,m,h):
     first_diagonal_Omega=np.zeros(m)
     second_diagonal_Omega=omega_sq*np.ones(m)
@@ -46,7 +49,10 @@ def grad_U(q):
     partials_U=partials_U[1:]
     return partials_U
                 
-        
+
+#####
+#Variational IMEX method
+#####
 def IMEX_FPUT_1_step(qn,pn,h,Omega,A):
     pnp=pn-0.5*h*grad_U(qn)
     qn1=A@(qn+h*pnp-0.25*h**2*Omega@qn)
@@ -54,7 +60,8 @@ def IMEX_FPUT_1_step(qn,pn,h,Omega,A):
     pn1=pn1m-0.5*h*grad_U(qn1)
     return qn1,pn1
 
-def IMEX_FPUT_simulation(m,q0,p0,h,omega_sq,t_final):
+def IMEX_FPUT_to_time(m,q0,p0,h,omega_sq,t_final):
+    #Assumes initial data given at time 0
     Omega,A=create_matrices(omega_sq=omega_sq,m=m,h=h)
     t=0
     qn=q0
@@ -64,3 +71,22 @@ def IMEX_FPUT_simulation(m,q0,p0,h,omega_sq,t_final):
         t+=h
     return qn,pn
 
+#####
+#Störmer-Verlet method
+#####
+def Stormer_Verlet(qn,vn,h,Omega):
+    vn_half=vn+0.5*h*(Omega@qn+grad_U(qn))
+    qn1=qn+h*vn_half
+    vn1=vn_half+0.5*h*(Omega@qn1+grad_U(qn1))
+    return qn,vn
+
+def Stormer_Verlet_to_time(m,q0,p0,h,omega_sq,t_final):
+    #Assumes initial data given at time 0
+    Omega,A=create_matrices(omega_sq=omega_sq,m=m,h=h)
+    t=0
+    qn=q0
+    pn=p0
+    while t<t_final:
+        qn,pn=Stormer_Verlet(qn=qn,vn=pn,h=h,Omega=Omega)
+        t+=h
+    return qn,pn
