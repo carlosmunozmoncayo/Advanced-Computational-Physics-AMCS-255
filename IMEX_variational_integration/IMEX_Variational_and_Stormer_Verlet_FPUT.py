@@ -32,19 +32,19 @@ def grad_U(q):
     for i in range(1,m_2+1): #From 1 to 2m
         for j in range(1,m): #From 1 to m-1
             if j+1==i:
-                partials_U[i]+=4*(q[i]-q[m+i]-q[i-1]-q[m+i-1])**3
+                partials_U[i]+=(q[i]-q[m+1]-q[i-1]-q[m+i-1])**3
             elif m+j+1==i:
-                partials_U[i]-=4*(q[i-m]-q[i]-q[i-m-1]-q[i-1])**3
+                partials_U[i]-=(q[i-m]-q[i]-q[i-m-1]-q[i-1])**3
             elif j==i:
-                partials_U[i]-=4*(q[i+1]-q[m+i+1]-q[i]-q[m+i])**3
+                partials_U[i]-=(q[i+1]-q[m+i+1]-q[i]-q[m+i])**3
             elif m+j==i:
-                partials_U[i]-=4*(q[i-m+1]-q[i+1]-q[i-m]-q[i])**3
+                partials_U[i]-=(q[i-m+1]-q[i+1]-q[i-m]-q[i])**3
         if i==1:
-            partials_U[i]+=4*(q[1]-q[m+1])**3
+            partials_U[i]+=(q[1]-q[m+1])**3
         elif i==m+1:
-            partials_U[i]-=4*(q[1]-q[m+1])**3
+            partials_U[i]-=(q[1]-q[m+1])**3
         elif i==m or i==m_2:
-            partials_U[i]+=4*(q[m]+q[m_2])**3
+            partials_U[i]+=(q[m]+q[m_2])**3
     #removing dummy element
     partials_U=partials_U[1:]
     return partials_U
@@ -53,40 +53,30 @@ def grad_U(q):
 #####
 #Variational IMEX method
 #####
-def IMEX_FPUT_1_step(qn,pn,h,Omega,A):
+def IMEX_FPUT_1_step(qn,pn,h,omega_sq):
+    m=len(qn)//2
+    Omega,A=create_matrices(omega_sq=omega_sq,m=m,h=h)
     pnp=pn-0.5*h*grad_U(qn)
     qn1=A@(qn+h*pnp-0.25*h**2*Omega@qn)
     pn1m=pnp-0.5*h*Omega@(qn1+qn)
     pn1=pn1m-0.5*h*grad_U(qn1)
     return qn1,pn1
 
-def IMEX_FPUT_to_time(m,q0,p0,h,omega_sq,t_final):
-    #Assumes initial data given at time 0
-    Omega,A=create_matrices(omega_sq=omega_sq,m=m,h=h)
-    t=0
-    qn=q0
-    pn=p0
-    while t<t_final:
-        qn,pn=IMEX_1_FPUT_1_step(qn=qn,pn=pn,h=h,Omega=Omega,A=A)
-        t+=h
-    return qn,pn
+
 
 #####
 #Störmer-Verlet method
 #####
-def Stormer_Verlet(qn,vn,h,Omega):
+def Stormer_Verlet_FPUT_1_step(qn,vn,h,omega_sq):
+    m=len(qn)//2
+    Omega,A=create_matrices(omega_sq=omega_sq,m=m,h=h)
     vn_half=vn+0.5*h*(Omega@qn+grad_U(qn))
     qn1=qn+h*vn_half
     vn1=vn_half+0.5*h*(Omega@qn1+grad_U(qn1))
-    return qn,vn
+    return qn1,vn1
 
-def Stormer_Verlet_to_time(m,q0,p0,h,omega_sq,t_final):
-    #Assumes initial data given at time 0
-    Omega,A=create_matrices(omega_sq=omega_sq,m=m,h=h)
-    t=0
-    qn=q0
-    pn=p0
-    while t<t_final:
-        qn,pn=Stormer_Verlet(qn=qn,vn=pn,h=h,Omega=Omega)
-        t+=h
-    return qn,pn
+
+
+if __name__=="__main__":
+    pass
+
