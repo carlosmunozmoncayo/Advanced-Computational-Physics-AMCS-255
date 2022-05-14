@@ -67,13 +67,13 @@ def IMEX_FPUT_1_step(qn,pn,h,omega_sq):
 #####
 #Störmer-Verlet method
 #####
-def Stormer_Verlet_FPUT_1_step(qn,vn,h,omega_sq):
+def Stormer_Verlet_FPUT_1_step(qn,pn,h,omega_sq):
     m=len(qn)//2
     Omega,A=create_matrices(omega_sq=omega_sq,m=m,h=h)
-    vn_half=vn+0.5*h*(Omega@qn+grad_U(qn))
-    qn1=qn+h*vn_half
-    vn1=vn_half+0.5*h*(Omega@qn1+grad_U(qn1))
-    return qn1,vn1
+    pn_half=pn-0.5*h*(Omega@qn+grad_U(qn))
+    qn1=qn+h*pn_half
+    pn1=pn_half-0.5*h*(Omega@qn1+grad_U(qn1))
+    return qn1,pn1
 
 
 
