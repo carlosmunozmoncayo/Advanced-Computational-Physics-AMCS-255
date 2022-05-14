@@ -5,43 +5,9 @@ import numpy as np
 import scipy.sparse as sparse
 import matplotlib.pyplot as plt
 
-from IMEX_Variational_and_Stormer_Verlet_FPUT import IMEX_FPUT_1_step
-from IMEX_Variational_and_Stormer_Verlet_FPUT import Stormer_Verlet_FPUT_1_step
+from IMEX_Variational_and_Stormer_Verlet_FPUT import IMEX_FPUT_1_step, Hamiltonian_FPUT, I_oscillatory_energy
+from IMEX_Variational_and_Stormer_Verlet_FPUT import Stormer_Verlet_FPUT_1_step, T_kinetic_energies
 
-#####
-#Defining energy estimates for each state
-####
-def Hamiltonian_FPUT(q,p,omega_sq):
-    H=0
-    m_2=len(q)
-    m=m_2//2
-    
-    #Add a dummy element for nicer indexes 
-    q=np.concatenate(([0],q),axis=0)
-    p=np.concatenate(([0],p),axis=0)
-    
-    #Computing Hamiltonian
-    H+=0.5*np.sum(p**2)
-    for i in range(1,m): #From 1 to m-1
-        H+=0.5*omega_sq*q[m+i]**2
-        H+=0.25*(q[i+1]-q[m+i+1]-q[i]-q[m+i])**4
-    H+=0.5*omega_sq*q[m_2]**2+0.25*((q[1]-q[m+1])**4+(q[m]+q[m_2])**4)
-    return H
-
-def I_oscillatory_energy(q,p,omega_sq):
-    m_2=len(q)
-    m=m_2//2
-    I_list=0.5*(p[m:]**2+omega_sq*q[m:]**2)
-    I=np.sum(I_list)
-    return I,I_list
-
-def T_kinetic_energies(p):
-    m=len(p)//2
-    #Kinetic energy of mass centre motion
-    T1=0.5*np.sum(p[:m]**2)
-    #Kinetic energy of relative motion of masses joined by stiff springs
-    T2=0.5*np.sum(p[m:]**2)
-    return T1,T2
 
 #####
 #A grid function norm to measure error
@@ -68,46 +34,9 @@ class State:
 #Plotting results
 #####
 
-def static_plots(states_IMEX,states_SV):
-    #Extracting data from objects (2 loops for clarity)
-    times=[]; H_IMEX=[]; I_IMEX=[]
-    I1_IMEX=[]; I2_IMEX=[]; I3_IMEX=[]
-    for state in states_IMEX:
-        times.append(state.time)
-        H_IMEX.append(state.H)
-        I_IMEX.append(state.I)
-        I1_IMEX.append(state.I1)
-        I2_IMEX.append(state.I2)
-        I3_IMEX.append(state.I3)
-    H_SV=[]; I_SV=[]
-    I1_SV=[]; I2_SV=[]; I3_SV=[]
-    for state in states_SV:
-        H_SV.append(state.H)
-        I_SV.append(state.I)
-        I1_SV.append(state.I1)
-        I2_SV.append(state.I2)
-        I3_SV.append(state.I3)
-
-    # plot lines
-    plt.plot(times, H_IMEX,label = "H IMEX")
-    plt.plot(times, I_IMEX, label = "I IMEX")
-    plt.plot(times, I1_IMEX, label = "I1 IMEX")
-    plt.plot(times, I2_IMEX, label = "I2 IMEX")
-    plt.plot(times, I3_IMEX, label = "I3 IMEX")  
-    plt.legend()
-    plt.show()
-    
-    plt.plot(times, H_SV,label = "H SV")
-    plt.plot(times, I_SV, label = "I SV")
-    plt.plot(times, I1_SV, label = "I1 SV")
-    plt.plot(times, I2_SV, label = "I2 SV")
-    plt.plot(times, I3_SV, label = "I3 SV")  
-    plt.legend()
-    plt.show()
-
-def static_subplots(list_simulations_IMEX,list_simulations_SV,list_h_IMEX,list_h_SV):
-    #len(list_states_SV_h)=3
-    #len(list_states_IMEX_h)=6
+def static_subplots_energy(list_simulations_IMEX,list_simulations_SV,list_h_IMEX,list_h_SV):
+    #len(list_simulations_SV_h)=3
+    #len(list_simulations_IMEX_h)=6
     #list_simulations_IMEX=[simulation,simulation,...,simulation]
     #simulation=[state at time 0,state at time h,state at time 2h,...]
     
@@ -140,7 +69,7 @@ def static_subplots(list_simulations_IMEX,list_simulations_SV,list_h_IMEX,list_h
         attributes_1plot_SV=[H_SV,I_SV,I1_SV,I2_SV,I3_SV,times]
         attributes_allplots_SV.append(attributes_1plot_SV)
 
-
+    #Plotting
     text=["H","I","I1","I2","I3"]
     fig, axs = plt.subplots(3, 3)
     #First and second rows
@@ -158,15 +87,15 @@ def static_subplots(list_simulations_IMEX,list_simulations_SV,list_h_IMEX,list_h
 
     axs[0,0].legend(loc="upper right")
     fig.tight_layout()
+    plt.savefig("Comparison_energies.png", bbox_inches="tight")
     plt.show()
 
 
-def run_simulation(h=0.03, method="IMEX"):
+def run_simulation(T_end=200,h=0.03, method="IMEX"):
     #Setting problem parameters, assuming initial time 0
     m=3
     omega=50
     omega_sq=omega**2
-    T_end=200
 
     if method=="IMEX":
         solver=IMEX_FPUT_1_step
@@ -185,16 +114,15 @@ def run_simulation(h=0.03, method="IMEX"):
     for i in range(1,len(times)):
         qn, pn=solver(qn=qn,pn=pn,h=h,omega_sq=omega_sq)
         simulation.append(State(qn,pn,times[i],omega_sq))
-    
     return simulation
 
-if __name__=="__main__":
+def get_comparison_energies():
     list_simulations_IMEX=[]
     list_simulations_SV=[]
     list_h_SV=[0.001,0.01, 0.03]
     #list_h_IMEX=[0.03, 0.1, 0.15, 0.2, 0.25, 0.3]
     list_h_IMEX=[0.001,0.01, 0.03,0.1, 0.15, 0.2]
-
+    
     for h in list_h_SV:
         simulation_SV=run_simulation(h=h,method="SV")
         list_simulations_SV.append(simulation_SV)
@@ -202,4 +130,50 @@ if __name__=="__main__":
         simulation_IMEX=run_simulation(h=h, method="IMEX")
         list_simulations_IMEX.append(simulation_IMEX)
 
-    static_subplots(list_simulations_IMEX,list_simulations_SV,list_h_IMEX,list_h_SV)
+    static_subplots_energy(list_simulations_IMEX,list_simulations_SV,list_h_IMEX,list_h_SV)
+
+def get_comparison_error():
+    T_end=20
+    ground_truth_IMEX=run_simulation(T_end=T_end,h=0.0001, method="IMEX")
+    exact_q_IMEX,exact_p_IMEX=ground_truth_IMEX[-1].q,ground_truth_IMEX[-1].p
+
+
+    ground_truth_SV=run_simulation(T_end=T_end,h=0.0001, method="SV")
+    exact_q_SV,exact_p_SV=ground_truth_SV[-1].q,ground_truth_SV[-1].p
+
+    errors_q_IMEX=[]; errors_p_IMEX=[]
+    errors_q_SV=[];  errors_p_SV=[]
+
+    min_h=0.01
+    max_h=0.1
+    step_h=0.005
+    hs=np.arange(min_h,max_h+step_h,step_h)
+    
+    for h in hs:
+        simulation_IMEX=run_simulation(T_end=T_end, h=h, method="IMEX") 
+        q_IMEX,p_IMEX=simulation_IMEX[-1].q,simulation_IMEX[-1].p  
+        errors_q_IMEX.append(np.linalg.norm(x=q_IMEX-exact_q_IMEX,ord=2))
+        errors_p_IMEX.append(np.linalg.norm(x=p_IMEX-exact_p_IMEX,ord=2))
+
+        simulation_SV=run_simulation(T_end=T_end, h=h, method="SV") 
+        q_SV,p_SV=simulation_SV[-1].q,simulation_SV[-1].p  
+        errors_q_SV.append(np.linalg.norm(x=q_SV-exact_q_SV,ord=2))
+        errors_p_SV.append(np.linalg.norm(x=p_SV-exact_p_SV,ord=2))
+    
+    fig, axs = plt.subplots(2,1, sharex=True)
+    axs[0].plot(hs,errors_q_IMEX,label="Error IMEX")
+    axs[0].plot(hs,errors_q_SV,label="Error SV")
+    axs[0].set_title(f"L2 error of q")
+
+    axs[1].plot(hs,errors_p_IMEX,label="Error IMEX")
+    axs[1].plot(hs,errors_p_SV,label="Error SV")
+    axs[1].set_title(f"L2 error of p")
+
+    axs[0].legend(loc="upper right")
+    axs[1].legend(loc="upper right")
+    fig.tight_layout()
+    plt.savefig("Comparison_errors.png", bbox_inches="tight")
+
+if __name__=="__main__":
+   get_comparison_energies()
+   get_comparison_error()
