@@ -87,8 +87,7 @@ def static_subplots_energy(list_simulations_IMEX,list_simulations_SV,list_h_IMEX
 
     axs[0,0].legend(loc="upper right")
     fig.tight_layout()
-    plt.savefig("Comparison_energies.png", bbox_inches="tight")
-    plt.show()
+    plt.savefig("Comparison_energies.png", bbox_inches="tight", dpi=300)
 
 
 def run_simulation(T_end=200,h=0.03, method="IMEX"):
@@ -133,7 +132,7 @@ def get_comparison_energies():
     static_subplots_energy(list_simulations_IMEX,list_simulations_SV,list_h_IMEX,list_h_SV)
 
 def get_comparison_error():
-    T_end=20
+    T_end=10
     ground_truth_IMEX=run_simulation(T_end=T_end,h=0.0001, method="IMEX")
     exact_q_IMEX,exact_p_IMEX=ground_truth_IMEX[-1].q,ground_truth_IMEX[-1].p
 
@@ -172,8 +171,8 @@ def get_comparison_error():
     axs[0].legend(loc="upper right")
     axs[1].legend(loc="upper right")
     fig.tight_layout()
-    plt.savefig("Comparison_errors.png", bbox_inches="tight")
-
+    plt.savefig("Comparison_errors.png", bbox_inches="tight", dpi=300)
+    plt.show()
 if __name__=="__main__":
-   get_comparison_energies()
+   #get_comparison_energies()
    get_comparison_error()
