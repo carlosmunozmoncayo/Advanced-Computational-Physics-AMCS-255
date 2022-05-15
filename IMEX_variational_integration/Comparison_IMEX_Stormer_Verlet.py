@@ -4,6 +4,7 @@
 import numpy as np
 import scipy.sparse as sparse
 import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 
 from IMEX_Variational_and_Stormer_Verlet_FPUT import IMEX_FPUT_1_step, Hamiltonian_FPUT, I_oscillatory_energy
 from IMEX_Variational_and_Stormer_Verlet_FPUT import Stormer_Verlet_FPUT_1_step, T_kinetic_energies
@@ -76,9 +77,63 @@ def static_subplots_energy(list_simulations_IMEX,list_simulations_SV,list_h_IMEX
         axs[2,i-3].set_title(f"IMEX h={list_h_IMEX[i]}")
 
     axs[0,0].legend(loc="upper right")
+    axs[2,2].set_xlabel("Time")
+    fig.suptitle("Fig 1. Comparison of energy conservation",fontsize=16)
     fig.tight_layout()
     plt.savefig("Comparison_energies.png", bbox_inches="tight", dpi=300)
 
+def dynamic_plot_q():
+    T_end=10
+    simulation_IMEX=run_simulation(T_end=T_end,h=0.01, method="IMEX")
+    simulation_SV=run_simulation(T_end=T_end,h=0.01, method="SV")
+    
+    times=[];qs_IMEX=[];ps_IMEX=[];qs_SV=[];ps_SV=[]
+    counter=0
+    for i in range(len(simulation_IMEX)):
+        times.append(simulation_IMEX[i].time)
+        qs_IMEX.append(simulation_IMEX[i].q)
+        ps_IMEX.append(simulation_IMEX[i].p)
+        qs_SV.append(simulation_SV[i].q)
+        ps_SV.append(simulation_SV[i].p)
+
+    
+    # Create figure and add axes
+    #fig = plt.figure(figsize=(6, 4))
+
+    #ax = fig.add_subplot(111)
+    fig, [ax,ax2] = plt.subplots(2)
+
+    ax.set_title("IMEX Variational method")
+    ax.set_xlim(-2.4,2.4)
+    ax.set_ylim(-1, 1)
+    # Create variable reference to plot
+    dyn_anim_IMEX, = ax.plot([], [], marker='o',linestyle='None',color='blue')#linewidth=2.5)
+
+
+    ax2.set_title("Störmer-Verlet method")
+    ax2.set_xlim(-2.4,2.4)
+    ax2.set_ylim(-1, 1)
+    # Create variable reference to plot
+    dyn_anim_SV, = ax2.plot([], [], marker='o',linestyle='None',color='red')#linewidth=2.5)
+    
+    # Add text annotation and create variable reference
+    timer = ax.text(1, 1, '', ha='right', va='top', fontsize=24)
+    # Animation function
+    def animate(i):
+        x = np.zeros(3)
+        q_IMEX = [qs_IMEX[i][0]-1.2,qs_IMEX[i][1],qs_IMEX[i][2]+1.2]#qs[i][:3]
+        q_SV = [qs_SV[i][0]-1.2,qs_SV[i][1],qs_SV[i][2]+1.2]#
+        dyn_anim_IMEX.set_data(q_IMEX, x)
+        dyn_anim_SV.set_data(q_SV,x)
+        #dyn_anim.set_color(colors(i))
+        timer.set_text("Time: "+str(round(times[i],2)))
+        #temp.set_color(colors(i))
+    # Create animation
+    ani = FuncAnimation(fig=fig, func=animate, frames=range(len(times)), interval=10, repeat=True)
+    fig.suptitle('Positions of centers of stiff springs', fontsize=16)
+    fig.tight_layout()
+    # Save and show animation
+    ani.save('Dynamic_plot_q.gif', writer='imagemagick', fps=30)
 
 def run_simulation(T_end=200,h=0.03, method="IMEX"):
     #Setting problem parameters, assuming initial time 0
@@ -141,13 +196,13 @@ def get_comparison_error():
     for h in hs:
         simulation_IMEX=run_simulation(T_end=T_end, h=h, method="IMEX") 
         q_IMEX,p_IMEX=simulation_IMEX[-1].q,simulation_IMEX[-1].p  
-        errors_q_IMEX.append(np.linalg.norm(x=q_IMEX-exact_q_IMEX,ord=2))
-        errors_p_IMEX.append(np.linalg.norm(x=p_IMEX-exact_p_IMEX,ord=2))
+        errors_q_IMEX.append(np.sqrt(h)*np.linalg.norm(x=q_IMEX-exact_q_IMEX,ord=2))
+        errors_p_IMEX.append(np.sqrt(h)*np.linalg.norm(x=p_IMEX-exact_p_IMEX,ord=2))
 
         simulation_SV=run_simulation(T_end=T_end, h=h, method="SV") 
         q_SV,p_SV=simulation_SV[-1].q,simulation_SV[-1].p  
-        errors_q_SV.append(np.linalg.norm(x=q_SV-exact_q_SV,ord=2))
-        errors_p_SV.append(np.linalg.norm(x=p_SV-exact_p_SV,ord=2))
+        errors_q_SV.append(np.sqrt(h)*np.linalg.norm(x=q_SV-exact_q_SV,ord=2))
+        errors_p_SV.append(np.sqrt(h)*np.linalg.norm(x=p_SV-exact_p_SV,ord=2))
     
     fig, axs = plt.subplots(2,1, sharex=True)
     axs[0].plot(hs,errors_q_IMEX,label="Error IMEX")
@@ -160,9 +215,14 @@ def get_comparison_error():
 
     axs[0].legend(loc="upper right")
     axs[1].legend(loc="upper right")
+    axs[0].set_xlabel("dt")
+    axs[1].set_xlabel("dt")
+    fig.suptitle("Fig 2. Error comparison at time 10 for different time steps",fontsize=16)
     fig.tight_layout()
     plt.savefig("Comparison_errors.png", bbox_inches="tight", dpi=300)
     plt.show()
+
 if __name__=="__main__":
-   #get_comparison_energies()
+   get_comparison_energies()
    get_comparison_error()
+   dynamic_plot_q()
