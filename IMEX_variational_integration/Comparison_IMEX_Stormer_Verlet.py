@@ -8,16 +8,6 @@ import matplotlib.pyplot as plt
 from IMEX_Variational_and_Stormer_Verlet_FPUT import IMEX_FPUT_1_step, Hamiltonian_FPUT, I_oscillatory_energy
 from IMEX_Variational_and_Stormer_Verlet_FPUT import Stormer_Verlet_FPUT_1_step, T_kinetic_energies
 
-
-#####
-#A grid function norm to measure error
-#####
-def q_norm_grid_function(x,h,q=2):
-    if q=="max":
-        return np.sum(np.abs(x))
-    else:
-        return (h*np.sum(np.abs(x)**q))**(1/q)
-
 #####
 #A class to store our states
 ####
