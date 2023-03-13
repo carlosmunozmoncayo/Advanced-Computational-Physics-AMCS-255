@@ -1,0 +1,4 @@
+*.ipynb linguist-detectable=false
+*.py linguist-detectable=true
+*.f90 linguist-detectable=true
+*.f linguist-detectable=true
